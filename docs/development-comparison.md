@@ -1,6 +1,6 @@
 # Why More on Foundry?
 
-**Start with a 1-2 minute read of [foundry_development_comparison.py](../demo/comparison/foundry_development_comparison.py): shared agent, separate services, more Foundry, and what you still own.** No terminal or Azure setup is needed. This is architecture-as-code, not a deployed application or a simulated live response. The detailed adoption notes below are supporting material.
+[foundry_development_comparison.py](../demo/comparison/foundry_development_comparison.py) defines a shared agent, two integration architectures, and safety/evaluation adapters. This is architecture-as-code, not a deployed application or a simulated live response. Consolidating selected integrations does not establish fewer lines of code or less total system complexity.
 
 ## Progressive Responsibility Transfer
 
@@ -23,13 +23,13 @@ These markers describe the named responsibility in a proposed adopted architectu
 | **5. + Evaluations** | Separately operate scoring jobs/integrations and aggregate reports | Submit prepared data for supported Foundry evaluation execution and result views | Output collection, dataset/mappings, judges, thresholds, scheduling/CI and release decisions [S6] |
 | **6. + Memory, conditional** | If needed, integrate/operate long-term extraction, consolidation, storage and retrieval | Use managed Memory Store operations through a verified compatible integration | Trusted scope, lifecycle integration, consent, retention/deletion and authoritative enterprise tools [S4] |
 
-**At every step say:** "As we adopt this capability, this specific responsibility can move to the managed service. Our support-agent business logic stays."
+Both entry points call `run_support()`, which registers shared application middleware and `model_call_checks()`. The separate path additionally supplies `external_safety_check()`. The documented [MAF chat middleware](https://learn.microsoft.com/agent-framework/agents/middleware/) runs inside the tool loop for each model call. The adapter maps text and local function exchanges, including tool results; it rejects unsupported content and streaming. It is not a complete safety product or a claim of policy equivalence. Apply privacy/minimization checks before either service receives data, and validate the actual deployment's coverage before removing external checks.
 
-In the source, compare `separate_services()` with `more_foundry()`, then scan their responsibility lists. Use the detailed steps below for questions.
+Both offline submitters accept the same versioned collected-output JSONL. Use relevance as the common evaluation goal, with `foundry_relevance_criteria()` on Foundry and an explicitly mapped external criterion/judge. Different scoring implementations are not assumed equivalent. Run IDs and the Foundry report URL are returned for later review; submission, status checks, metric-error review and release gates remain customer responsibilities. No evaluation runs inside the agent request.
 
 ## Step 0: Keep the Business Logic
 
-Start at **SHARED MAF AGENT / BUSINESS LOGIC** in the comparison file. The question is:
+Both architectures use the same support question:
 
 > For order DEMO-1042, is Item A covered and how do I contact support?
 
@@ -43,36 +43,30 @@ The same MAF agent uses three approved read-only tools in both designs. The inte
 
 These are illustrative enterprise contracts, not provided servers or actual order data. Foundry does not implement the business APIs. Each backend must enforce the authenticated caller's access.
 
-**Say:** "This is the code we want to spend time on: what the agent should do for the customer. It stays the same."
-
 ## Step 1 Before: Direct Connections
 
-In **SEPARATE SERVICES**, highlight `service_urls`, `auth_providers` and the loop in `separate_services()` that connects each service.
+`separate_services()` uses `service_urls` and `auth_providers` to connect each service individually.
 
 This version already uses MAF, MCP and a Foundry model. The framework handles tool calling; we do not inflate the baseline by hand-writing it. The application/platform team supplies separate connection and authentication configuration for each service.
 
-**Say:** "Model access is already managed. The remaining work is connecting, securing and operating the agent around the model."
-
 ## Step 1 After: The Foundry Connection
 
-In **MORE FOUNDRY**, highlight `toolbox_url`, `toolbox_auth_provider` in `more_foundry()`, then the identical `build_agent(...)` and `agent.run(...)` calls.
+`more_foundry()` uses `toolbox_url` and `toolbox_auth_provider` for one consumer connection. Both entry points use the same `run_support()` implementation and `build_agent()` definition.
 
 Toolbox exposes a curated collection through one MCP-compatible endpoint. Configure the same three tool names/schemas and supported backend authentication in Toolbox. The caller still authenticates to Toolbox; the backends still authorize requests. The application allowlist remains explicit [S3,S8].
 
-**Say:** "The business logic did not change. Supported backend connections and credential handling moved into a reusable platform configuration. Other agents can consume that same Toolbox."
-
-### The Maintenance Moment
+### Connection Maintenance
 
 Suppose the support service changes its endpoint or authentication configuration, keeping its contract stable:
 
 - **Direct:** update the affected service/auth configuration in each independently configured consumer or its shared platform configuration.
 - **Toolbox:** update/test the supported connection centrally and promote the intended Toolbox version. Consumers using that default can keep their endpoint and code; pinned consumers need a planned version update.
 
-This is a walkthrough of a change, not a live configuration update. The point is **fewer per-consumer integrations to maintain**, not "look how many lines disappeared." Shared gateways can already offer similar benefits; assess the incremental value if one exists.
+This example describes a configuration change; it does not apply one. Centralized connections can reduce per-consumer integration maintenance. Shared gateways can already offer similar benefits; assess the incremental value if one exists.
 
-## Step 2: Show What Hosting Transfers
+## Step 2: Hosting Responsibilities
 
-Keep the same agent file open and show this table. **The Toolbox version can still run outside Foundry.** Adopting Toolbox does not require moving the runtime [S2,S3].
+**The Toolbox version can still run outside Foundry.** Adopting Toolbox does not require moving the runtime [S2,S3].
 
 | Keep your runtime | Optionally use Agent Service |
 |---|---|
@@ -80,21 +74,19 @@ Keep the same agent file open and show this table. **The Toolbox version can sti
 | Configure your telemetry pipeline and investigation views | Connect Application Insights and use supported server-side agent traces |
 | Maintain agent code, dependencies and backend integration | Still maintain agent code, dependencies and backend integration |
 
-**Say:** "MAF is how I write the agent. Agent Service is an optional place to run it. I can transfer serving and scaling responsibilities as well as supported tool integration, without moving my order system."
-
 Required work has not vanished: compatible serving entry point, packaging/deployment, identity/RBAC, model configuration, network access and an Application Insights connection. Custom spans, alerts, privacy, application recovery and service costs remain yours. No hosting or telemetry implementation is included in these excerpts [S2,S7].
 
 ## Step 3: Add Observability / Tracing
 
 **BEFORE:** configure agent telemetry emission/export and correlated investigation views. **AFTER:** for the hosted-agent path in step 2, connect Application Insights to the project and use supported server-side spans and Foundry trace views. The application does not have to emit those server spans or build their viewing experience [S7].
 
-The agent call remains unchanged. Custom application/backend spans still require instrumentation; end-to-end correlation, alerts, privacy and telemetry operations remain yours. External/workflow agent tracing is preview. Connecting Application Insights does not instrument arbitrary code, and the resource has separate access, retention and billing. This walkthrough configures neither hosting nor tracing.
+The agent call remains unchanged. Custom application/backend spans still require instrumentation; end-to-end correlation, alerts, privacy and telemetry operations remain yours. External/workflow agent tracing is preview. Connecting Application Insights does not instrument arbitrary code, and the resource has separate access, retention and billing. These examples configure neither hosting nor tracing.
 
 ## Step 4: Add Guardrails
 
 **BEFORE:** where extra checks are required, maintain a separate safety-service adapter and enforce its decisions. **AFTER:** configure and assign supported controls on the chosen model/API or agent intervention point. The service can perform those covered checks/actions without that separate adapter in the application path [S5].
 
-The baseline already has model default protections. The approved examples contain no custom safety adapter to remove. This transfer is conditional on equivalent coverage and tested failure behavior, not a claim that all safety code disappears. Keep domain checks, pre-transmission privacy controls, backend authorization, filter/error handling and false-positive tests. Agent/tool controls may be preview or path-specific. Policy creation, assignment and inference remain separate; the business instructions do not change.
+The baseline already has model default protections. The comparison includes an illustrative external safety adapter; its removal is conditional on equivalent coverage and tested failure behavior, not a claim that all safety code disappears. Keep domain checks, pre-transmission privacy controls, backend authorization, filter/error handling and false-positive tests. Agent/tool controls may be preview or path-specific. Policy creation, assignment and inference remain separate; the business instructions do not change.
 
 ## Step 5: Add Evaluations Outside the Request Path
 
@@ -109,14 +101,6 @@ Keep this **outside the request functions and `agent.run()`**. Configure the dat
 The current support request is stateless: there is no memory implementation to remove, and this step can be skipped. Keep the same support instructions and tools. Any memory/context integration surrounds that logic; recalled context must not replace authoritative order/warranty facts or grant access.
 
 For hosted MAF code, do not assume the prompt-agent memory-search tool is automatically attached. Verify a supported API/context integration and retain its lifecycle calls, explicit trusted scope, consent, retention/deletion and recall/isolation tests. Compatible chat/embedding deployments and store configuration are required. Memory stores currently lack VNet integration. Memory is not a general vector database, enterprise knowledge base or replacement for all session history. No memory integration is supplied here.
-
-## Close on the Choice
-
-**Say:** "Why more on Foundry? So each agent does not have to be its own platform project. Keep the business logic and enterprise systems; reuse managed capabilities for the work you do not want to operate."
-
-The concrete comparison demonstrates tool-connection code. Its architecture comments cover hosting, tracing, policy enforcement, offline evaluation and conditional memory. Each identifies a bounded responsibility transfer without changing the shared agent or presenting configuration as Python calls.
-
-The technical checks below are reference material, not part of the short source walkthrough.
 
 ## Example Boundaries
 

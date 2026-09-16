@@ -4,7 +4,7 @@ This reference explains the architecture's supported boundaries and links to pro
 
 ## Verdict
 
-The three architectures are **choices on an adoption spectrum**, not a maturity ladder. [A](architecture/01-model-only.md) is a legitimate composable stack; [B](architecture/02-selective-foundry.md) is the scope of this sample; [C](architecture/03-deeper-foundry.md) is an optional response to different operational needs.
+The three [architecture choices](architecture/03-deeper-foundry.md) are **choices on an adoption spectrum**, not a maturity ladder. A is a legitimate composable stack; B describes selective Guardrails and Evaluations adoption; C is an optional response to different operational needs. The architecture-as-code comparison is separate from the runnable model harness and offline evaluation exercise.
 
 The sample combines **model Guardrails + offline Evaluations** with existing model access. Supported model checks can execute on the existing inference path, and Foundry can evaluate externally produced outputs [S1-S4]. Verify policy assignment and actual outcomes on a supported deployment, and run a dataset-target evaluation without creating an agent. Follow the [getting-started guide](../README.md) for setup.
 

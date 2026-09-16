@@ -1,6 +1,6 @@
 # Optional Live Model Sample
 
-This is the original **Model + Guardrails + Evaluations** exercise, not the main [five-minute developer demo](development-comparison.md). It makes real model calls and supports a separate portal evaluation of synthetic fixtures. It does not implement Agent Service hosting, Toolbox or Memory.
+This **Model + Guardrails + Evaluations** exercise is separate from the [development comparison](development-comparison.md). It makes real model calls and supports a separate portal evaluation of synthetic fixtures. It does not implement Agent Service hosting, Toolbox or Memory.
 
 ## Prerequisites
 

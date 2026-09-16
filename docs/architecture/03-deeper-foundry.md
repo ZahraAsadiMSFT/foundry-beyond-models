@@ -1,6 +1,18 @@
-# C. Optional Deeper Integration
+# Architecture Choices
 
-**Message:** After B's selected Guardrails + Evaluations, consume more Foundry capabilities only where agent hosting, repeated tool connections, long-term memory, trace investigation or adversarial testing becomes an operational bottleneck. Each is an independent adoption decision. C is not a target state and is not automatically better than B.
+These are independent adoption choices, not a maturity ladder or a measured reduction in code, cost or total complexity. The [development comparison](../development-comparison.md) contains the code-level responsibilities; the [validation guide](../architecture-validation.md) records technical boundaries and sources.
+
+| Choice | Foundry manages | Separately integrated or retained |
+|---|---|---|
+| **A. Model access** | Model inference and default endpoint protections | Chosen runtime/framework, tool connections, additional safety controls, evaluation and telemetry; memory only if needed |
+| **B. Selective adoption** | A plus supported, assigned Guardrails and selected offline evaluation execution/result views | Existing runtime, enterprise tools and authorization, application privacy/domain checks, telemetry, dataset preparation and release decisions |
+| **C. Optional deeper integration** | Selected hosting, Toolbox connections, supported trace views or memory operations where requirements match | Agent/business logic, backend systems, identities, configuration, deployment, unsupported adapters and operational accountability |
+
+A is a valid composable stack: external vendors or shared platform teams may already manage these services and integrations. B assumes matching safety/evaluation requirements; it does not establish parity with an external provider. Policy assignment is separate from inference, evaluations score supplied outputs offline, and existing safety adapters should be retired only after coverage and failure-behavior tests. Neither choice requires moving enterprise data or the application into Foundry.
+
+## C. Optional Deeper Integration
+
+Consume more Foundry capabilities only where agent hosting, repeated tool connections, long-term memory, trace investigation or adversarial testing becomes an operational bottleneck. Each is an independent adoption decision. C is not a target state and is not automatically better than B.
 
 **Compose around the managed runtime:** Build agent logic with Microsoft Agent Framework (MAF), package that code as a hosted agent, and let Foundry Agent Service manage its endpoint, scaling and runtime lifecycle. Model, Toolbox, Memory, Guardrails, Evaluations and observability are connected capabilities with distinct configuration and access requirements, not a mandatory bundle. MAF can also run externally; Agent Service can host other compatible frameworks.
 
@@ -118,6 +130,6 @@ Agent guardrails can override the underlying model guardrail rather than add ano
 
 ## Adoption Boundary
 
-Remaining at B, or selecting only one C capability while keeping an external runtime, is a valid outcome. For each potential addition, compare the work transferred with its constraints, migration effort, and ongoing cost. The five options are not a migration checklist. This repository implements only the Model + Guardrails + Evaluations sample; C is conceptual.
+Remaining at B, or selecting only one C capability while keeping an external runtime, is a valid outcome. For each potential addition, compare the work transferred with its constraints, migration effort, and ongoing cost. The five options are not a migration checklist. The runnable model harness and separate evaluation exercise are distinct from the architecture-as-code comparison. No live Toolbox integration or hosted-agent deployment is supplied; C is conceptual.
 
 Sources: [Agent Service](https://learn.microsoft.com/azure/foundry/agents/overview), [Agent Framework](https://learn.microsoft.com/agent-framework/overview/), [Toolbox](https://learn.microsoft.com/azure/foundry/agents/concepts/toolbox-overview), [tracing](https://learn.microsoft.com/azure/foundry/observability/concepts/trace-agent-concept).
