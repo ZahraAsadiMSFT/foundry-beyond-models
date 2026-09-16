@@ -6,6 +6,12 @@ Why use Microsoft Foundry beyond simply calling a model API? Model access does n
 
 ## Architecture
 
+[![The same application across three choices: independently integrated services, selective Foundry adoption, and optional deeper managed capabilities. Customers retain business logic and enterprise systems while reducing selected AI-platform integration and operational work.](foundry.png)](foundry.png)
+
+*Select the image to view it at full size.*
+
+**Same application, less AI-platform plumbing, your choice.** This conceptual overview shows broader adoption options, not everything implemented here. This sample selects **Model + Guardrails + Evaluations**; Toolbox, Memory, Agent Service and Foundry tracing remain optional. The detailed diagrams below distinguish MAF as a developer framework from Agent Service as a managed runtime. Enterprise APIs/data and authorization remain customer-owned; Foundry trace views use separately connected Application Insights. Connections inside the illustration indicate integration, not automatic migration, universal safety coverage, or measured savings.
+
 | Stage | Approach | What changes |
 |---|---|---|
 | [A: Model access](docs/architecture/01-model-only.md) | Foundry hosts the model; other AI-specific responsibilities are independently operated. | A composable baseline, not an inherently bad architecture. Model default safety already applies. |

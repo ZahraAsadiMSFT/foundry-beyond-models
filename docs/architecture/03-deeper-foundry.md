@@ -2,88 +2,86 @@
 
 **Message:** After B's selected Guardrails + Evaluations, consume more Foundry capabilities only where agent hosting, repeated tool connections, long-term memory, trace investigation or adversarial testing becomes an operational bottleneck. Each is an independent adoption decision. C is not a target state and is not automatically better than B.
 
-**Read left to right:** Independently operated responsibility -> optional Foundry capability and potential simplification -> ownership that stays outside Foundry. The left column shows work considered for consolidation, not a mandatory duplicate stack running alongside Foundry. Adopt only the rows whose coverage, cost and constraints justify the change; unselected responsibilities stay where they are in B.
+**Compose around the managed runtime:** Build agent logic with Microsoft Agent Framework (MAF), package that code as a hosted agent, and let Foundry Agent Service manage its endpoint, scaling and runtime lifecycle. Model, Toolbox, Memory, Guardrails, Evaluations and observability are connected capabilities with distinct configuration and access requirements, not a mandatory bundle. MAF can also run externally; Agent Service can host other compatible frameworks.
 
 ```mermaid
-flowchart LR
-    subgraph EXT["BEFORE | THIRD-PARTY / CUSTOM"]
-        Hosting["Agent hosting + scaling<br/>Runtime lifecycle operations"]
-        Connections["Repeated tool adapters<br/>Per-consumer connection setup"]
-        Store["Long-term memory store<br/>Extraction + retrieval pipeline"]
-        Views["Custom AI trace views<br/>Span exploration + correlation"]
-        Attacks["Custom / external adversarial tests<br/>Attack generation + run reports"]
+flowchart TB
+    subgraph APP["CUSTOMER BUILDS | APPLICATION + AGENT LOGIC"]
+        App["Same application<br/>UI + business process + approvals"]
+        MAF["Microsoft Agent Framework - MAF<br/>Developer framework<br/>Agent logic + dependencies you own"]
     end
-    subgraph FOUNDRY["MICROSOFT FOUNDRY | CHOOSE INDEPENDENTLY"]
-        Baseline["ALREADY IN B<br/>Models + Guardrails + Evaluations"]
-        Runtime["1. Agent Service<br/>Managed agent hosting + lifecycle"]
-        Toolbox["2. Toolbox<br/>Reusable supported tool connections"]
-        Memory["3. Memory: preview<br/>Managed extraction + recall"]
-        Trace["4. Foundry tracing<br/>Ready-made AI trace exploration"]
-        Red["5. AI Red Teaming: preview<br/>Automated attacks + reporting"]
+    subgraph FOUNDRY["MICROSOFT FOUNDRY | OPTIONAL CONNECTED CAPABILITIES"]
+        Runtime["Foundry Agent Service<br/>MANAGED RUNTIME<br/>Hosts your MAF agent code<br/>Endpoint + scaling + lifecycle"]
+        Model["Model<br/>Managed inference"]
+        Policy["Guardrails<br/>Assigned supported controls<br/>Agent intervention points: preview"]
+        Toolbox["Toolbox<br/>Shared MCP endpoint<br/>Supported auth + versioning"]
+        Memory["Memory - preview<br/>Managed extraction + recall<br/>Configure scope + dependencies"]
+        Eval["Evaluations<br/>Offline execution + reports"]
+        Trace["Observability<br/>Foundry AI trace views"]
     end
-    subgraph APP["APPLICATION / CUSTOMER-OWNED | RETAINED"]
-        App["UI + business logic + agent code<br/>Approvals + failure recovery"]
-        Data["PII + domain controls + consent<br/>Memory scope + retention<br/>Conversation-history requirements"]
-        Review["Test scope + human security testing<br/>Remediation + release decisions"]
+    subgraph RETAINED["STILL OUTSIDE FOUNDRY | CUSTOMER / ENTERPRISE OPERATIONS"]
+        Tools["Enterprise APIs / MCP + data<br/>Backend authorization<br/>Unsupported adapters stay"]
+        Review["Data + human review<br/>Quality thresholds + release decisions<br/>PII, consent + retention"]
+        Monitor["Application Insights<br/>Separate Azure resource<br/>Instrumentation + access + cost"]
     end
-    subgraph ENT["ENTERPRISE SYSTEMS / DATA | RETAINED"]
-        Tools["Tools + APIs + source data<br/>Enterprise authorization"]
-    end
-    subgraph AZURE["SEPARATE AZURE RESOURCE / CUSTOMER OPERATIONS"]
-        Monitor["Application Insights + Azure Monitor<br/>Instrumentation + data controls<br/>Existing observability can stay"]
-    end
-    Hosting -->|"supported runtime operations"| Runtime
-    Connections -->|"supported shared connections"| Toolbox
-    Store -->|"scoped memory pipeline"| Memory
-    Views -->|"AI investigation experience"| Trace
-    Attacks -->|"supported automated test scope"| Red
-    Runtime -.->|"customer still owns"| App
-    Toolbox -.->|"customer still owns"| Tools
-    Memory -.->|"customer still owns"| Data
-    Trace -.->|"still requires"| Monitor
-    Red -.->|"customer still owns"| Review
+    App -->|"invoke managed agent endpoint"| Runtime
+    MAF -.->|"package + deploy hosted code"| Runtime
+    Runtime <-->|"inference"| Model
+    Policy -.->|"configure + assign"| Runtime
+    Runtime <-->|"configured tool use"| Toolbox
+    Runtime <-->|"configured memory access"| Memory
+    Runtime -.->|"prepared outputs / test evidence"| Eval
+    Runtime -.->|"instrumented telemetry"| Trace
+    Toolbox <-->|"supported connection; backend enforces access"| Tools
+    Eval -.->|"scores + reasons"| Review
+    Trace -.->|"views backed by connected resource"| Monitor
     classDef app fill:#EAF2FC,stroke:#245A91,color:#172B4D,stroke-width:2px
     classDef external fill:#F3F4F6,stroke:#667085,color:#202939
     classDef foundry fill:#DDF3EF,stroke:#087E8B,color:#123B40,stroke-width:2px
-    classDef optional fill:#FFFFFF,stroke:#087E8B,color:#123B40,stroke-width:2px,stroke-dasharray:5 4
+    classDef runtime fill:#DFF6DD,stroke:#107C10,color:#153D17,stroke-width:3px
     classDef enterprise fill:#FFF2D8,stroke:#96711C,color:#493A16
-    class App,Data,Review app
-    class Hosting,Connections,Store,Views,Attacks,Monitor external
-    class Baseline foundry
-    class Runtime,Toolbox,Memory,Trace,Red optional
+    class App,MAF,Review app
+    class Monitor external
+    class Model,Policy,Toolbox,Memory,Eval,Trace foundry
+    class Runtime runtime
     class Tools enterprise
     style APP fill:#FFFFFF,stroke:#245A91,stroke-width:2px
-    style EXT fill:#FFFFFF,stroke:#667085,stroke-dasharray:5 4
-    style FOUNDRY fill:#F3FBF9,stroke:#087E8B,stroke-width:2px
-    style ENT fill:#FFFFFF,stroke:#96711C,stroke-width:2px
-    style AZURE fill:#FFFFFF,stroke:#667085,stroke-dasharray:5 4
+    style FOUNDRY fill:#F3FBF9,stroke:#087E8B,stroke-width:2px,stroke-dasharray:5 4
+    style RETAINED fill:#FFFFFF,stroke:#667085,stroke-dasharray:5 4
 ```
 
-**Legend:** This is a consolidation map, not a runtime sequence or network topology. Solid arrows identify work potentially transferred to a supported Foundry capability; dotted arrows identify retained ownership or dependencies, not API calls or telemetry direction. Dashed numbered boxes are independent options; the filled box is B's existing adoption. Customer-authored agent code remains customer-owned even when executed in Agent Service. See [availability and integration caveats](../architecture-validation.md); this is not a tested deployment template.
+**Legend:** Blue is customer-authored application/agent logic; green is the managed runtime; teal blocks are configured platform capabilities. Solid arrows show runtime exchanges; dotted arrows show deployment, policy assignment, offline evaluation or telemetry dependencies as labeled. MAF's deployment arrow is not a runtime network hop. Evaluation does not sit in the request path. The dashed Foundry boundary marks this entire composition as optional, not as one private network or billing boundary. This is not a tested deployment template; validate the chosen model/runtime/API combination and [availability constraints](../architecture-validation.md).
+
+| SEPARATE STACK | MORE MANAGED FOUNDRY |
+|---|---|
+| Host, scale and monitor an independent agent-serving layer | Agent Service operates the supported runtime; developers maintain MAF agent/business logic |
+| Repeat supported tool adapters and credential handling per consumer | Toolbox exposes reusable connections with configured auth and version management |
+| Maintain selected memory pipelines, scoring jobs and AI trace views | Compose managed memory, evaluations and trace views around the runtime |
+| Coordinate each selected platform integration independently | Reduce selected application-owned boundaries; reuse platform management where supported |
+
+**The benefit is less AI-platform infrastructure and integration to maintain, not less responsibility for application correctness.** Connection configuration, permissions, networking, failure handling, code upgrades, monitoring and release decisions do not disappear. AI Red Teaming remains an independent optional offline workflow in the table below; it is not required to compose these blocks.
 
 **What does not move:** The whole application, business process, enterprise APIs and authoritative data do not move into Foundry. Authorization, approvals/consent, PII/domain controls, data governance and human decisions remain customer responsibilities. Application Insights remains a separate resource; Foundry provides the AI tracing experience over collected telemetry, not a replacement telemetry backend.
 
 ## ASCII Fallback
 
 ```text
-ALREADY IN B: Foundry models + Guardrails + offline Evaluations
+CUSTOMER:  Same application                  MAF agent logic [framework]
+                        | invoke                           : package + deploy
+                        v                                  v
+FOUNDRY:   [Agent Service: managed runtime hosting your code]
+                          ^ assigned Guardrails at supported intervention points
+                  |         |          |          :              :
+              [Model]   [Toolbox]   [Memory]  [Evaluations]  [Trace views]
+                                |        preview      :              :
+                                |                     v              v
+                                v                 Customer      App Insights
+                      Enterprise APIs/MCP      release       [separate resource]
+                      + authorization         review
 
-BEFORE / INDEPENDENTLY OPERATED   OPTIONAL FOUNDRY CHOICE    STILL OWNED OUTSIDE
-Agent hosting + lifecycle -----> 1. Agent Service ........ Business logic/code,
-                                                                 managed runtime           approvals + recovery
-Repeated tool connections -----> 2. Toolbox .............. APIs + authorization
-                                                                 shared connections        [ENTERPRISE SYSTEMS]
-Long-term memory pipeline -----> 3. Memory (preview) ..... Consent + scope,
-                                                                 extraction + recall       retention + PII
-Custom AI trace exploration ---> 4. Foundry tracing ...... Instrumentation,
-                                                                 AI trace experience       Application Insights
-                                                                                                                     [SEPARATE RESOURCE]
-Adversarial test automation ----> 5. AI Red Teaming ....... Human security tests,
-                                                                 (preview)                 remediation + gates
-
-Arrows show potential consolidation, NOT runtime calls or a required bundle.
-Unselected responsibilities stay in B. Authoritative enterprise data and
-conversation-history requirements remain distinct from long-term memory.
+Solid paths: configured runtime exchanges. Dotted paths: setup/offline/telemetry.
+Policy assignment targets the supported runtime/model path, not every action.
+KEPT: business logic + dependencies + PII + consent + permissions + operations
 ```
 
 ## Potential Consolidation

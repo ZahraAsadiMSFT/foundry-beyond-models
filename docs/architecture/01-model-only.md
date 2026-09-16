@@ -1,39 +1,38 @@
 # A. Model Access, Composable Stack
 
-**Message:** We already consume the model here. The organization chooses how to integrate and operate everything around it.
+**Flexible components, independently operated boundaries.** The same application can be built from separate services. Foundry supplies the model; the customer or shared platform team connects and operates the surrounding stack. This is a valid choice, especially where those integrations already work well.
 
 ```mermaid
 flowchart LR
-    subgraph APP["APPLICATION-OWNED"]
-        App["App + LangChain / custom<br/>Test data + release decisions"]
+    subgraph APP["CUSTOMER-OWNED | APPLICATION + RUNTIME"]
+        App["Application<br/>Business logic + user experience<br/>PII + domain validation"]
+        Runtime["Agent runtime / orchestration<br/>LangChain / custom<br/>Hosting + scaling + upgrades"]
     end
-    subgraph EXT["THIRD-PARTY / CUSTOM"]
-        Checks["Input / output checks<br/>Injection + safety adapters"]
-        Data["Memory + PII handling<br/>Grounding validation"]
-        Eval["External / custom evaluation platform<br/>(e.g., DynamoAI)"]
-        Red["Custom / external red teaming"]
-        Logs["Existing observability<br/>OpenTelemetry"]
+    subgraph EXT["SEPARATELY SELECTED SERVICES | INDEPENDENT LIFECYCLES"]
+        Checks["Safety / Guardrails<br/>Separate service / custom checks"]
+        Data["Memory<br/>LangChain + external vector DB"]
+        Eval["Evaluation<br/>DynamoAI / custom platform"]
+        Logs["Observability<br/>Datadog / App Insights<br/>OpenTelemetry instrumentation"]
     end
     subgraph FOUNDRY["MICROSOFT FOUNDRY"]
         Model["Model endpoint<br/>Default safety filters already apply"]
     end
     subgraph ENT["ENTERPRISE SYSTEMS / DATA"]
-        Tools["Tools + APIs + source data<br/>Enterprise authorization"]
+        Tools["Tools | enterprise APIs / MCP<br/>Source data + authorization"]
     end
-    App <-->|"request / response checks"| Checks
-    Checks <-->|"model inference"| Model
-    App <-->|"context / data controls"| Data
-    App <-->|"authorized tool calls"| Tools
-    App -.->|"recorded test outputs"| Eval
-    Eval -.->|"scores / findings"| App
-    App -.->|"instrumented spans"| Logs
-    App -.->|"separate adversarial test workflow"| Red
+    App --> Runtime
+    Runtime <-->|"safety SDK + auth<br/>result adapter + failure policy"| Checks
+    Checks <-->|"model API + identity<br/>network + retries / errors"| Model
+    Runtime <-->|"memory SDK + auth<br/>schema + retrieval adapter"| Data
+    Runtime <-->|"API / MCP adapters<br/>tool auth + retries / errors"| Tools
+    Runtime -.->|"dataset export + judge config<br/>run jobs + report mapping"| Eval
+    Runtime -.->|"span instrumentation<br/>exporter auth + correlation"| Logs
     classDef app fill:#EAF2FC,stroke:#245A91,color:#172B4D,stroke-width:2px
     classDef external fill:#F3F4F6,stroke:#667085,color:#202939
     classDef foundry fill:#DDF3EF,stroke:#087E8B,color:#123B40,stroke-width:2px
     classDef enterprise fill:#FFF2D8,stroke:#96711C,color:#493A16
-    class App app
-    class Checks,Data,Eval,Logs,Red external
+    class App,Runtime app
+    class Checks,Data,Eval,Logs external
     class Model foundry
     class Tools enterprise
     style APP fill:#FFFFFF,stroke:#245A91,stroke-width:2px
@@ -42,24 +41,33 @@ flowchart LR
     style ENT fill:#FFFFFF,stroke:#96711C,stroke-width:2px
 ```
 
-**Read the visual:** Solid arrows are runtime exchanges; dotted arrows are offline evidence or telemetry. Boundaries identify operational ownership, not network isolation or billing boundaries. Grouped checks are responsibilities, not a prescribed serial algorithm. The application includes the user-facing entry point.
+**Read the visual:** Each labeled connection is integration work: API/SDK compatibility, authentication, adapters, network access, errors and telemetry. Solid arrows show logical runtime exchanges, not a prescribed serial safety algorithm; dotted arrows show offline evaluation or telemetry. Component boxes represent selected services, not necessarily customer-hosted infrastructure. Vendors may manage their own services; the customer still operates the cross-service integrations. Existing red teaming is a separate test workflow, omitted for readability.
+
+| Across these boundaries | Customer / shared platform responsibility |
+|---|---|
+| Connect | SDKs/APIs, identities, permissions, adapters and network paths |
+| Handle failures | Timeouts, retries, result normalization and fallback behavior |
+| Operate | Deployment/scaling of owned runtimes and adapters; service health and telemetry correlation |
+| Change safely | Configuration, schemas, dependency upgrades and cross-service regression tests |
+
+**More independently operated services -> more interfaces and lifecycles to coordinate -> more integration and operational ownership.** Existing shared platforms can already reduce this work; the comparison is not a claim that separate services are inherently inefficient.
 
 ## ASCII Fallback
 
 ```text
-APPLICATION-OWNED          THIRD-PARTY / CUSTOM       MICROSOFT FOUNDRY
-+-------------------+     +---------------------+    +--------------------+
-| UI + app          |<--->| Injection / safety  |<-->| Model endpoint     |
-| Existing runtime  |     | Input/output checks |    | Default filtering  |
-+-------------------+     +---------------------+    +--------------------+
-   |       |    |
-   |       |    +<------> Memory / PII / grounding [THIRD-PARTY / CUSTOM]
-   |       +---- spans -> Existing observability  [THIRD-PARTY / CUSTOM]
-   +<------------------> Tools / APIs / data      [ENTERPRISE SYSTEMS]
+APPLICATION -> LANGCHAIN / CUSTOM RUNTIME [customer hosts + scales]
+                          |
+                          +-- safety SDK/auth --> separate/custom safety service
+                          |                            +-- model API --> Foundry model
+                          |                                              (default filters)
+                          +-- memory SDK/auth --> LangChain / external vector DB
+                          +.. export/jobs ......> DynamoAI / custom evaluation
+                          +.. spans/exporters ..> Datadog / App Insights / OTel
+                          +-- tool adapters ----> enterprise APIs / MCP
 
-App outputs ..> External / custom evaluation platform (e.g., DynamoAI)
-            ..> Customer release gate
-App ..> Custom / external red teaming (separate test workflow)
+ACROSS CONNECTIONS: identities + networking + retries/errors + configuration
+OPERATE: owned deployments/scaling + monitoring + upgrades + compatibility
+BENEFIT: flexible service choice; existing investments can remain
 ```
 
 ## Architectural Reading
