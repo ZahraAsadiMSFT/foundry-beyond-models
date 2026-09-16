@@ -149,6 +149,8 @@ activemq-data/
 
 # Environments
 .env
+.env.*
+!.env.example
 .envrc
 .venv
 env/
@@ -216,3 +218,14 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local model captures and evaluation exports
+/demo/evidence/
+
+# Local Azure CLI state and editor / operating-system artifacts
+.azure/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
